@@ -1,0 +1,563 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		53467BCC2E62E9A8004DD0EF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 53467BB42E62E9A6004DD0EF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 53467BBB2E62E9A6004DD0EF;
+			remoteInfo = "aide-de-camp";
+		};
+		53467BD62E62E9A8004DD0EF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 53467BB42E62E9A6004DD0EF /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 53467BBB2E62E9A6004DD0EF;
+			remoteInfo = "aide-de-camp";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		53467BBC2E62E9A6004DD0EF /* aide-de-camp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "aide-de-camp.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		53467BCB2E62E9A8004DD0EF /* aide-de-campTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "aide-de-campTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		53467BD52E62E9A8004DD0EF /* aide-de-campUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "aide-de-campUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		53467BBE2E62E9A6004DD0EF /* aide-de-camp */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "aide-de-camp";
+			sourceTree = "<group>";
+		};
+		53467BCE2E62E9A8004DD0EF /* aide-de-campTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "aide-de-campTests";
+			sourceTree = "<group>";
+		};
+		53467BD82E62E9A8004DD0EF /* aide-de-campUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "aide-de-campUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		53467BB92E62E9A6004DD0EF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53467BC82E62E9A8004DD0EF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53467BD22E62E9A8004DD0EF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		53467BB32E62E9A6004DD0EF = {
+			isa = PBXGroup;
+			children = (
+				53467BBE2E62E9A6004DD0EF /* aide-de-camp */,
+				53467BCE2E62E9A8004DD0EF /* aide-de-campTests */,
+				53467BD82E62E9A8004DD0EF /* aide-de-campUITests */,
+				53467BBD2E62E9A6004DD0EF /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		53467BBD2E62E9A6004DD0EF /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				53467BBC2E62E9A6004DD0EF /* aide-de-camp.app */,
+				53467BCB2E62E9A8004DD0EF /* aide-de-campTests.xctest */,
+				53467BD52E62E9A8004DD0EF /* aide-de-campUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		53467BBB2E62E9A6004DD0EF /* aide-de-camp */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 53467BDF2E62E9A8004DD0EF /* Build configuration list for PBXNativeTarget "aide-de-camp" */;
+			buildPhases = (
+				53467BB82E62E9A6004DD0EF /* Sources */,
+				53467BB92E62E9A6004DD0EF /* Frameworks */,
+				53467BBA2E62E9A6004DD0EF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				53467BBE2E62E9A6004DD0EF /* aide-de-camp */,
+			);
+			name = "aide-de-camp";
+			packageProductDependencies = (
+			);
+			productName = "aide-de-camp";
+			productReference = 53467BBC2E62E9A6004DD0EF /* aide-de-camp.app */;
+			productType = "com.apple.product-type.application";
+		};
+		53467BCA2E62E9A8004DD0EF /* aide-de-campTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 53467BE22E62E9A8004DD0EF /* Build configuration list for PBXNativeTarget "aide-de-campTests" */;
+			buildPhases = (
+				53467BC72E62E9A8004DD0EF /* Sources */,
+				53467BC82E62E9A8004DD0EF /* Frameworks */,
+				53467BC92E62E9A8004DD0EF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				53467BCD2E62E9A8004DD0EF /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				53467BCE2E62E9A8004DD0EF /* aide-de-campTests */,
+			);
+			name = "aide-de-campTests";
+			packageProductDependencies = (
+			);
+			productName = "aide-de-campTests";
+			productReference = 53467BCB2E62E9A8004DD0EF /* aide-de-campTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		53467BD42E62E9A8004DD0EF /* aide-de-campUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 53467BE52E62E9A8004DD0EF /* Build configuration list for PBXNativeTarget "aide-de-campUITests" */;
+			buildPhases = (
+				53467BD12E62E9A8004DD0EF /* Sources */,
+				53467BD22E62E9A8004DD0EF /* Frameworks */,
+				53467BD32E62E9A8004DD0EF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				53467BD72E62E9A8004DD0EF /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				53467BD82E62E9A8004DD0EF /* aide-de-campUITests */,
+			);
+			name = "aide-de-campUITests";
+			packageProductDependencies = (
+			);
+			productName = "aide-de-campUITests";
+			productReference = 53467BD52E62E9A8004DD0EF /* aide-de-campUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		53467BB42E62E9A6004DD0EF /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					53467BBB2E62E9A6004DD0EF = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					53467BCA2E62E9A8004DD0EF = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 53467BBB2E62E9A6004DD0EF;
+					};
+					53467BD42E62E9A8004DD0EF = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 53467BBB2E62E9A6004DD0EF;
+					};
+				};
+			};
+			buildConfigurationList = 53467BB72E62E9A6004DD0EF /* Build configuration list for PBXProject "aide-de-camp" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 53467BB32E62E9A6004DD0EF;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 53467BBD2E62E9A6004DD0EF /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				53467BBB2E62E9A6004DD0EF /* aide-de-camp */,
+				53467BCA2E62E9A8004DD0EF /* aide-de-campTests */,
+				53467BD42E62E9A8004DD0EF /* aide-de-campUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		53467BBA2E62E9A6004DD0EF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53467BC92E62E9A8004DD0EF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53467BD32E62E9A8004DD0EF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		53467BB82E62E9A6004DD0EF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53467BC72E62E9A8004DD0EF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		53467BD12E62E9A8004DD0EF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		53467BCD2E62E9A8004DD0EF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 53467BBB2E62E9A6004DD0EF /* aide-de-camp */;
+			targetProxy = 53467BCC2E62E9A8004DD0EF /* PBXContainerItemProxy */;
+		};
+		53467BD72E62E9A8004DD0EF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 53467BBB2E62E9A6004DD0EF /* aide-de-camp */;
+			targetProxy = 53467BD62E62E9A8004DD0EF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		53467BDD2E62E9A8004DD0EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		53467BDE2E62E9A8004DD0EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		53467BE02E62E9A8004DD0EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-camp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		53467BE12E62E9A8004DD0EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-camp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		53467BE32E62E9A8004DD0EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-campTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/aide-de-camp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/aide-de-camp";
+			};
+			name = Debug;
+		};
+		53467BE42E62E9A8004DD0EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-campTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/aide-de-camp.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/aide-de-camp";
+			};
+			name = Release;
+		};
+		53467BE62E62E9A8004DD0EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-campUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "aide-de-camp";
+			};
+			name = Debug;
+		};
+		53467BE72E62E9A8004DD0EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = HN4U8TK868;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-campUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "aide-de-camp";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		53467BB72E62E9A6004DD0EF /* Build configuration list for PBXProject "aide-de-camp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53467BDD2E62E9A8004DD0EF /* Debug */,
+				53467BDE2E62E9A8004DD0EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		53467BDF2E62E9A8004DD0EF /* Build configuration list for PBXNativeTarget "aide-de-camp" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53467BE02E62E9A8004DD0EF /* Debug */,
+				53467BE12E62E9A8004DD0EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		53467BE22E62E9A8004DD0EF /* Build configuration list for PBXNativeTarget "aide-de-campTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53467BE32E62E9A8004DD0EF /* Debug */,
+				53467BE42E62E9A8004DD0EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		53467BE52E62E9A8004DD0EF /* Build configuration list for PBXNativeTarget "aide-de-campUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				53467BE62E62E9A8004DD0EF /* Debug */,
+				53467BE72E62E9A8004DD0EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 53467BB42E62E9A6004DD0EF /* Project object */;
+}
