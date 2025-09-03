@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		53FF52D52E68860500ECCB73 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 53FF52D42E6885FE00ECCB73 /* .gitignore */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		53467BCC2E62E9A8004DD0EF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		53467BBC2E62E9A6004DD0EF /* aide-de-camp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "aide-de-camp.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		53467BCB2E62E9A8004DD0EF /* aide-de-campTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "aide-de-campTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		53467BD52E62E9A8004DD0EF /* aide-de-campUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "aide-de-campUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		53FF52D42E6885FE00ECCB73 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -65,6 +70,7 @@
 		53467BB32E62E9A6004DD0EF = {
 			isa = PBXGroup;
 			children = (
+				53FF52D42E6885FE00ECCB73 /* .gitignore */,
 				53467BBE2E62E9A6004DD0EF /* aide-de-camp */,
 				53467BBD2E62E9A6004DD0EF /* Products */,
 			);
@@ -194,6 +200,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				53FF52D52E68860500ECCB73 /* .gitignore in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

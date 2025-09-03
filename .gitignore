@@ -1,0 +1,23 @@
+# macOS
+.DS_Store
+
+# Xcode user data
+**/xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.moved-aside
+
+# Build artifacts
+build/
+DerivedData/
+
+# SwiftPM
+/.build
+Package.resolved
+
+# CocoaPods (commit Podfile & Podfile.lock; ignore Pods/)
+Pods/
+
+# Carthage
+Carthage/Build/
