@@ -35,16 +35,6 @@
 			path = "aide-de-camp";
 			sourceTree = "<group>";
 		};
-		53467BCE2E62E9A8004DD0EF /* aide-de-campTests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "aide-de-campTests";
-			sourceTree = "<group>";
-		};
-		53467BD82E62E9A8004DD0EF /* aide-de-campUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = "aide-de-campUITests";
-			sourceTree = "<group>";
-		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,8 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				53467BBE2E62E9A6004DD0EF /* aide-de-camp */,
-				53467BCE2E62E9A8004DD0EF /* aide-de-campTests */,
-				53467BD82E62E9A8004DD0EF /* aide-de-campUITests */,
 				53467BBD2E62E9A6004DD0EF /* Products */,
 			);
 			sourceTree = "<group>";
@@ -130,9 +118,6 @@
 			dependencies = (
 				53467BCD2E62E9A8004DD0EF /* PBXTargetDependency */,
 			);
-			fileSystemSynchronizedGroups = (
-				53467BCE2E62E9A8004DD0EF /* aide-de-campTests */,
-			);
 			name = "aide-de-campTests";
 			packageProductDependencies = (
 			);
@@ -152,9 +137,6 @@
 			);
 			dependencies = (
 				53467BD72E62E9A8004DD0EF /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				53467BD82E62E9A8004DD0EF /* aide-de-campUITests */,
 			);
 			name = "aide-de-campUITests";
 			packageProductDependencies = (
@@ -400,6 +382,8 @@
 				DEVELOPMENT_TEAM = HN4U8TK868;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Aide De Camp";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -412,6 +396,10 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-camp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -428,6 +416,8 @@
 				DEVELOPMENT_TEAM = HN4U8TK868;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "Aide De Camp";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.entertainment";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -440,6 +430,10 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "lexington.aide-de-camp";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
