@@ -136,8 +136,16 @@ final class OpenAIService {
             onFunctionCall: onFunctionCall,
             onComplete: onComplete
         )
-        let session = URLSession(configuration: .default, delegate: delegate, delegateQueue: nil)
-        session.dataTask(with: request).resume()
+        
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 300
+        
+        let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: nil)
+        delegate.setSession(session) // Pass session reference for cleanup
+        
+        let task = session.dataTask(with: request)
+        task.resume()
     }
 }
 
@@ -145,14 +153,17 @@ final class OpenAIService {
 
 // Services/OpenAIService.swift
 
+// MARK: - Streaming Delegate
+
 private class StreamingSessionDelegate: NSObject, URLSessionDataDelegate {
     private let webhookURL: String
     private let onPartial: (String) -> Void
     private let onFunctionCall: ((FunctionCall) -> Void)?
     private let onComplete: (Result<Void, Error>) -> Void
-
+    
     private var textBuffer = ""
-
+    private var dataBuffer = Data() // Buffer for incomplete SSE chunks
+    
     // Accumulator for tool-calls during streaming
     private struct ToolAcc {
         var id: String?
@@ -160,7 +171,10 @@ private class StreamingSessionDelegate: NSObject, URLSessionDataDelegate {
         var arguments: String = ""
     }
     private var toolAccumulators: [Int: ToolAcc] = [:] // keyed by 'index'
-
+    
+    // Add weak reference to session to properly clean up
+    private weak var session: URLSession?
+    
     init(
         webhookURL: String,
         onPartial: @escaping (String) -> Void,
@@ -172,89 +186,181 @@ private class StreamingSessionDelegate: NSObject, URLSessionDataDelegate {
         self.onFunctionCall = onFunctionCall
         self.onComplete = onComplete
     }
-
+    
+    func setSession(_ session: URLSession) {
+        self.session = session
+    }
+    
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        guard let chunkText = String(data: data, encoding: .utf8) else { return }
-
-        chunkText.enumerateLines { rawLine, _ in
-            guard rawLine.hasPrefix("data: ") else { return }
-            let payload = rawLine.dropFirst(6)
-            if payload == "[DONE]" {
-                self.onComplete(.success(()))
-                return
+        // Append new data to buffer
+        dataBuffer.append(data)
+        
+        // Process complete lines from buffer
+        guard let bufferString = String(data: dataBuffer, encoding: .utf8) else { return }
+        let lines = bufferString.components(separatedBy: "\n")
+        
+        // Keep the last incomplete line in buffer
+        if let lastLine = lines.last, !lastLine.isEmpty && !bufferString.hasSuffix("\n") {
+            dataBuffer = lastLine.data(using: .utf8) ?? Data()
+        } else {
+            dataBuffer = Data()
+        }
+        
+        // Process all complete lines
+        for (index, line) in lines.enumerated() {
+            // Skip the last line if it's incomplete
+            if index == lines.count - 1 && !bufferString.hasSuffix("\n") {
+                break
             }
-            guard let jsonData = payload.data(using: .utf8) else { return }
-
-            do {
-                let sse = try JSONDecoder().decode(StreamChunk.self, from: jsonData)
-                if let delta = sse.choices.first?.delta {
-                    if let content = delta.content {
-                        self.textBuffer += content
-                        self.onPartial(self.textBuffer)
-                    }
-                    if let toolDeltas = delta.toolCalls {
-                        for d in toolDeltas {
-                            let idx = d.index ?? 0
-                            var acc = self.toolAccumulators[idx, default: ToolAcc()]
-                            if let id = d.id { acc.id = id }
-                            if let name = d.function.name { acc.name = name }
-                            if let args = d.function.arguments { acc.arguments += args }
-                            self.toolAccumulators[idx] = acc
-                        }
-                    }
-                }
-
-                // IMPORTANT: modern API uses "tool_calls" (plural) when the assistant finishes emitting a tool call.  [oai_citation:4‡OpenAI Cookbook](https://cookbook.openai.com/examples/how_to_call_functions_with_chat_models)
-                if let finish = sse.choices.first?.finishReason, finish == "tool_calls" {
-                    for (_, acc) in self.toolAccumulators {
-                        guard let id = acc.id, let name = acc.name else { continue }
-                        let fc = FunctionCall(
-                            id: id,
-                            function: .init(name: name, arguments: acc.arguments)
-                        )
-                        self.onFunctionCall?(fc)
-                    }
-                }
-            } catch {
-                self.onComplete(.failure(error))
-            }
+            
+            processLine(line)
         }
     }
-
+    
+    private func processLine(_ line: String) {
+        let trimmedLine = line.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Skip empty lines and non-data lines
+        guard !trimmedLine.isEmpty else { return }
+        guard trimmedLine.hasPrefix("data: ") else { return }
+        
+        let payload = String(trimmedLine.dropFirst(6))
+        
+        if payload == "[DONE]" {
+            // Process any remaining tool calls before completing
+            finalizeToolCalls()
+            cleanup()
+            onComplete(.success(()))
+            return
+        }
+        
+        guard let jsonData = payload.data(using: .utf8) else { return }
+        
+        do {
+            let sse = try JSONDecoder().decode(StreamChunk.self, from: jsonData)
+            
+            if let delta = sse.choices.first?.delta {
+                // Handle content streaming
+                if let content = delta.content {
+                    textBuffer += content
+                    onPartial(textBuffer)
+                }
+                
+                // Handle tool call streaming
+                if let toolDeltas = delta.toolCalls {
+                    for toolDelta in toolDeltas {
+                        let idx = toolDelta.index ?? 0
+                        var acc = toolAccumulators[idx, default: ToolAcc()]
+                        
+                        if let id = toolDelta.id { acc.id = id }
+                        if let name = toolDelta.function?.name { acc.name = name }
+                        if let args = toolDelta.function?.arguments { acc.arguments += args }
+                        
+                        toolAccumulators[idx] = acc
+                    }
+                }
+            }
+            
+            // Check for finish_reason
+            if let finishReason = sse.choices.first?.finishReason {
+                if finishReason == "tool_calls" {
+                    finalizeToolCalls()
+                    // Don't complete here - wait for [DONE]
+                }
+                // "stop" and "length" are also followed by [DONE], so we wait
+            }
+            
+        } catch {
+            // Log parsing errors but don't fail the stream
+            print("⚠️ Failed to parse SSE chunk: \(error)")
+            // Continue processing other chunks
+        }
+    }
+    
+    private func finalizeToolCalls() {
+        for (_, acc) in toolAccumulators {
+            guard let id = acc.id, let name = acc.name else { continue }
+            let fc = FunctionCall(
+                id: id,
+                function: .init(name: name, arguments: acc.arguments)
+            )
+            onFunctionCall?(fc)
+        }
+        toolAccumulators.removeAll()
+    }
+    
+    private func cleanup() {
+        session?.invalidateAndCancel()
+    }
+    
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        if let error = error { onComplete(.failure(error)) }
+        if let error = error {
+            // Check if it's a cancellation we initiated (not an error)
+            let nsError = error as NSError
+            if nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled {
+                // This is expected when we call cleanup() after [DONE]
+                return
+            }
+            cleanup()
+            onComplete(.failure(error))
+        }
+        // Success case is handled by [DONE] message
+    }
+    
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        // Check for valid response
+        if let httpResponse = response as? HTTPURLResponse {
+            if httpResponse.statusCode >= 400 {
+                cleanup()
+                onComplete(.failure(NSError(
+                    domain: "OpenAI API Error",
+                    code: httpResponse.statusCode,
+                    userInfo: [NSLocalizedDescriptionKey: "HTTP \(httpResponse.statusCode)"]
+                )))
+                completionHandler(.cancel)
+                return
+            }
+        }
+        completionHandler(.allow)
     }
 }
 
 // MARK: - Streaming DTOs
 
+// Update the StreamChunk struct to match current OpenAI API
 private struct StreamChunk: Decodable {
     struct Choice: Decodable {
         struct Delta: Decodable {
             let content: String?
             let toolCalls: [ToolCallDelta]?
+            
             enum CodingKeys: String, CodingKey {
                 case content
                 case toolCalls = "tool_calls"
             }
         }
-        let delta: Delta
+        
+        let delta: Delta?
         let finishReason: String?
+        let index: Int
+        
         enum CodingKeys: String, CodingKey {
             case delta
             case finishReason = "finish_reason"
+            case index
         }
     }
     let choices: [Choice]
 }
 
 private struct ToolCallDelta: Decodable {
-    struct Fn: Decodable {
+    struct Function: Decodable {
         let name: String?
         let arguments: String?
     }
+    
     let id: String?
     let index: Int?
-    let function: Fn
-    // 'type' may exist but not needed here
+    let type: String?
+    let function: Function?
 }
