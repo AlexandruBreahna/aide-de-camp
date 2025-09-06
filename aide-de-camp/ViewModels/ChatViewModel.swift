@@ -25,8 +25,8 @@ final class ChatViewModel: ObservableObject {
         let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        guard let openAIKey = UserDefaults.standard.string(forKey: Constants.UserDefaultsKeys.openAIKey),
-              !openAIKey.isEmpty else {
+        let openAIKey = KeychainStore.get(Constants.UserDefaultsKeys.openAIKey)
+        guard !openAIKey.isEmpty else {
             alertMessage = Constants.SystemMessages.missingAPIKey
             return
         }
@@ -153,7 +153,7 @@ final class ChatViewModel: ObservableObject {
                 // 5) Second streamed call to let the model wrap up in natural language
                 self.openAIService.sendMessageStream(
                     messages: self.messages,
-                    apiKey: UserDefaults.standard.string(forKey: Constants.UserDefaultsKeys.openAIKey) ?? "",
+                    apiKey: KeychainStore.get(Constants.UserDefaultsKeys.openAIKey),
                     webhookURL: webhookURL,
                     functionResponses: [assistantToolCallMessage, toolResultMessage],
                     onPartial: { [weak self] partial in
