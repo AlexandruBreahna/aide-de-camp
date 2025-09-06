@@ -13,196 +13,387 @@ final class ChatViewModel: ObservableObject {
     @Published var inputText: String = ""
     @Published var isLoading: Bool = false
     @Published var alertMessage: String? = nil
+    @Published var errorMessage: String? = nil
+    @Published var isRetrying: Bool = false
+    private var retryWorkItem: DispatchWorkItem?
 
     private var cancellables = Set<AnyCancellable>()
     private let openAIService = OpenAIService()
     private let webhookService = WebhookService()
+    private var loggedEvents: Set<String> = []
 
-    init() {}
+    init() {
+        loadConversation()
+    }
+    
+    private func saveConversation() {
+        guard let url = getConversationFileURL() else { return }
+        
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        
+        if let data = try? encoder.encode(messages) {
+            try? data.write(to: url)
+        }
+    }
 
-    // ViewModels/ChatViewModel.swift
+    private func loadConversation() {
+        guard let url = getConversationFileURL(),
+              let data = try? Data(contentsOf: url) else { return }
+        
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        
+        if let loadedMessages = try? decoder.decode([Message].self, from: data) {
+            // Filter out any thinking messages that shouldn't have been saved
+            messages = loadedMessages.filter { $0.text != Constants.SystemMessages.aiThinking }
+        }
+    }
+
+    private func getConversationFileURL() -> URL? {
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        return documentsPath?.appendingPathComponent("conversation.json")
+    }
+    
+    func retryLastMessage() {
+        guard let lastUserMessage = messages.last(where: { $0.isFromUser }) else { return }
+        
+        // Remove error message
+        if let errorIndex = messages.lastIndex(where: { !$0.isFromUser && $0.text.starts(with: "Error:") }) {
+            messages.remove(at: errorIndex)
+        }
+        
+        // Retry sending
+        errorMessage = nil
+        sendMessageInternal(text: lastUserMessage.text)
+    }
+
+    // Update appendMessage to save after each message
+    private func appendMessage(_ message: Message) {
+        messages.append(message)
+
+        if messages.count > Constants.maxMessageCount {
+            messages.removeFirst(messages.count - Constants.maxMessageCount)
+        }
+        
+        // Only save if it's not a thinking message
+        if message.text != Constants.SystemMessages.aiThinking {
+            saveConversation()
+        }
+    }
+
+    // Update startNewSession to delete saved file
+    func startNewSession() {
+        messages.removeAll()
+        loggedEvents.removeAll()
+        if let url = getConversationFileURL() {
+            try? FileManager.default.removeItem(at: url)
+        }
+    }
+
     func sendMessage() {
         let trimmed = inputText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
-
+        
         let openAIKey = KeychainStore.get(Constants.UserDefaultsKeys.openAIKey)
         guard !openAIKey.isEmpty else {
             alertMessage = Constants.SystemMessages.missingAPIKey
             return
         }
-
+        
         guard let webhookURL = UserDefaults.standard.string(forKey: Constants.UserDefaultsKeys.webhookURL),
               !webhookURL.isEmpty else {
             alertMessage = Constants.SystemMessages.missingWebhookURL
             return
         }
-
-        // 1) append user message + show placeholder
-        let userMessage = Message(sender: .user, text: trimmed)
-        appendMessage(userMessage)
+        
+        // Store text and clear input
+        let messageText = trimmed
         inputText = ""
+        
+        // Add user message
+        let userMessage = Message(sender: .user, text: messageText)
+        appendMessage(userMessage)
+        
+        sendMessageInternal(text: messageText)
+    }
+    
+    private func sendMessageInternal(text: String) {
         isLoading = true
-
+        errorMessage = nil
+        
         let streamingMessage = Message(sender: .ai, text: Constants.SystemMessages.aiThinking)
         appendMessage(streamingMessage)
         let streamingId = streamingMessage.id
         
         HapticsService.shared.streamBegan()
-
-        // 2) first turn: stream assistant
-        openAIService.sendMessageStream(
-            messages: messages,
+        
+        let openAIKey = KeychainStore.get(Constants.UserDefaultsKeys.openAIKey)
+        let webhookURL = UserDefaults.standard.string(forKey: Constants.UserDefaultsKeys.webhookURL) ?? ""
+        
+        guard !openAIKey.isEmpty && !webhookURL.isEmpty else {
+            return
+        }
+        
+        // Filter out thinking messages before sending
+        let cleanMessages = messages.filter {
+            $0.text != Constants.SystemMessages.aiThinking
+        }
+        
+        // Use the retry-enabled method
+        openAIService.sendMessageStreamWithRetry(
+            messages: cleanMessages,
             apiKey: openAIKey,
             webhookURL: webhookURL,
-            functionResponses: [], // none yet
+            functionResponses: [],
+            maxRetries: 2,
             onPartial: { [weak self] partial in
                 DispatchQueue.main.async {
+                    self?.isRetrying = false
                     if let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
                         self?.messages[idx] = Message(id: streamingId, sender: .ai, text: partial)
+                        // Save the updated message
+                        if !partial.isEmpty && partial != Constants.SystemMessages.aiThinking {
+                            self?.saveConversation()
+                        }
                     }
                     HapticsService.shared.streamTick()
                 }
             },
             onFunctionCall: { [weak self] functionCall in
-                guard let self = self else { return }
-
-                // 1) Parse model arguments (may or may not include date/hour)
-                let rawArgs = functionCall.function.arguments
-                let argsData = rawArgs.data(using: .utf8) ?? Data()
-                var json = (try? JSONSerialization.jsonObject(with: argsData)) as? [String: Any] ?? [:]
-
-                // 2) Force device-local date & time (override whatever the model sent)
-                let now = Date()
-                let dateFormatter = DateFormatter()
-                dateFormatter.calendar = .current
-                dateFormatter.locale = .current
-                dateFormatter.timeZone = .current
-                dateFormatter.dateFormat = "yyyy-MM-dd"
-                let timeFormatter = DateFormatter()
-                timeFormatter.calendar = .current
-                timeFormatter.locale = .current
-                timeFormatter.timeZone = .current
-                timeFormatter.dateFormat = "HH:mm"
-
-                json["date"] = dateFormatter.string(from: now)
-                json["hour"] = timeFormatter.string(from: now)
-                
-                // Ensure numbers are numeric (some models may send strings like "250")
-                func toNumber(_ v: Any?) -> Any? {
-                    if let n = v as? NSNumber { return n }
-                    if let s = v as? String, let d = Double(s) { return d }
-                    return nil
-                }
-
-                if (json["event_type"] as? String) == "meal" {
-                    if let v = toNumber(json["calories"]) { json["calories"] = v }
-                    if let v = toNumber(json["proteins"]) { json["proteins"] = v }
-                    if let v = toNumber(json["fat"]) { json["fat"] = v }
-                    if let v = toNumber(json["carbs"]) { json["carbs"] = v }
-                }
-                if (json["event_type"] as? String) == "expense" {
-                    if let v = toNumber(json["value"]) { json["value"] = v }
-                }
-                if (json["event_type"] as? String) == "workout" {
-                    if let v = toNumber(json["sets"]) { json["sets"] = v }
-                    if let v = toNumber(json["reps"]) { json["reps"] = v }
-                    if let v = toNumber(json["weight"]) { json["weight"] = v }
-                }
-
-                // Basic guard for required fields
-                guard json["event_type"] as? String != nil else {
-                    DispatchQueue.main.async {
-                        self.isLoading = false
-                        if let idx = self.messages.firstIndex(where: { $0.id == streamingId }) {
-                            self.messages[idx] = Message(
-                                id: streamingId,
-                                sender: .ai,
-                                text: "I couldn’t detect what type of event to log. Try again with meal/workout/expense."
-                            )
-                        }
-                    }
-                    return
-                }
-
-                // 3) Send to webhook ONCE here
-                guard let webhookURL = UserDefaults.standard.string(forKey: Constants.UserDefaultsKeys.webhookURL),
-                      !webhookURL.isEmpty else { return }
-                WebhookService.sendEvent(data: json, webhookURL: webhookURL)
-
-                // 4) Build assistant tool-call + tool result messages for the follow-up turn
-                let assistantToolCallMessage: [String: Any] = [
-                    "role": "assistant",
-                    "content": "",
-                    "tool_calls": [[
-                        "id": functionCall.id,
-                        "type": "function",
-                        "function": [
-                            "name": functionCall.function.name,
-                            "arguments": rawArgs
-                        ]
-                    ]]
-                ]
-
-                let toolResultMessage: [String: Any] = [
-                    "role": "tool",
-                    "tool_call_id": functionCall.id,
-                    "name": functionCall.function.name,
-                    "content": "Event logged successfully on \(json["date"] ?? "") at \(json["hour"] ?? "")."
-                ]
-
-                // 5) Second streamed call to let the model wrap up in natural language
-                self.openAIService.sendMessageStream(
-                    messages: self.messages,
-                    apiKey: KeychainStore.get(Constants.UserDefaultsKeys.openAIKey),
-                    webhookURL: webhookURL,
-                    functionResponses: [assistantToolCallMessage, toolResultMessage],
-                    onPartial: { [weak self] partial in
-                        DispatchQueue.main.async {
-                            if let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
-                                self?.messages[idx] = Message(id: streamingId, sender: .ai, text: partial)
-                            }
-                            HapticsService.shared.streamTick()
-                        }
-                    },
-                    onFunctionCall: { _ in },
-                    onComplete: { [weak self] result in
-                        DispatchQueue.main.async {
-                            self?.isLoading = false
-                            if case .failure(let error) = result,
-                               let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
-                                self?.messages[idx] = Message(id: streamingId, sender: .ai, text: "Error: \(error.localizedDescription)")
-                                // + Haptics: error
-                                HapticsService.shared.streamEndedError()
-                            } else {
-                                // + Haptics: success
-                                HapticsService.shared.streamEndedSuccess()
-                            }
-                        }
-                    }
-                )
+                // Your existing function call handling code here
+                self?.handleFunctionCall(functionCall, streamingId: streamingId, webhookURL: webhookURL, openAIKey: openAIKey)
             },
             onComplete: { [weak self] result in
                 DispatchQueue.main.async {
-                    // If there was NO tool-call path, finish here
-                    if case .failure(let error) = result {
-                        if let idx = self?.messages.lastIndex(where: { $0.id == streamingMessage.id }) {
-                            self?.messages[idx] = Message(id: streamingMessage.id, sender: .ai, text: "Error: \(error.localizedDescription)")
+                    self?.isLoading = false
+                    self?.isRetrying = false
+                    
+                    switch result {
+                    case .failure(let error):
+                        if let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
+                            let errorText = self?.formatError(error) ?? "An error occurred"
+                            self?.messages[idx] = Message(id: streamingId, sender: .ai, text: errorText)
+                            self?.errorMessage = errorText
                         }
-                        // + Haptics: error
                         HapticsService.shared.streamEndedError()
-                    } else {
-                        // + Haptics: success
+                        
+                    case .success:
+                        self?.errorMessage = nil
+                        self?.saveConversation()
                         HapticsService.shared.streamEndedSuccess()
-                    }
-                    // If a tool call happened, the second request above will flip isLoading to false.
-                    if self?.isLoading == true && (self?.messages.last?.text != Constants.SystemMessages.aiThinking) {
-                        self?.isLoading = false
                     }
                 }
             }
         )
     }
+    
+    private func formatError(_ error: Error) -> String {
+        let nsError = error as NSError
+        
+        if nsError.domain == NSURLErrorDomain {
+            switch nsError.code {
+            case NSURLErrorNotConnectedToInternet:
+                return "No internet connection. Please check your network and try again."
+            case NSURLErrorTimedOut:
+                return "Request timed out. Please try again."
+            default:
+                return "Network error. Please check your connection and try again."
+            }
+        }
+        
+        if nsError.domain == "OpenAI API Error" {
+            switch nsError.code {
+            case 429:
+                return "Rate limit exceeded. Please wait a moment and try again."
+            case 401:
+                return "Invalid API key. Please check your settings."
+            case 500...599:
+                return "OpenAI service is temporarily unavailable. Please try again later."
+            default:
+                return "OpenAI API error: \(nsError.localizedDescription)"
+            }
+        }
+        
+        return "Error: \(error.localizedDescription)"
+    }
 
+    // Extract function call handling to separate method for clarity
+    private func handleFunctionCall(_ functionCall: FunctionCall, streamingId: UUID, webhookURL: String, openAIKey: String) {
+        // 1) Parse model arguments
+        let rawArgs = functionCall.function.arguments
+        let argsData = rawArgs.data(using: .utf8) ?? Data()
+        var json = (try? JSONSerialization.jsonObject(with: argsData)) as? [String: Any] ?? [:]
+
+        // 2) Force device-local date & time
+        let now = Date()
+        let dateFormatter = DateFormatter()
+        dateFormatter.calendar = .current
+        dateFormatter.locale = .current
+        dateFormatter.timeZone = .current
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        let timeFormatter = DateFormatter()
+        timeFormatter.calendar = .current
+        timeFormatter.locale = .current
+        timeFormatter.timeZone = .current
+        timeFormatter.dateFormat = "HH:mm"
+
+        json["date"] = dateFormatter.string(from: now)
+        json["hour"] = timeFormatter.string(from: now)
+        
+        // Ensure numbers are numeric
+        func toNumber(_ v: Any?) -> Any? {
+            if let n = v as? NSNumber { return n }
+            if let s = v as? String, let d = Double(s) { return d }
+            return nil
+        }
+
+        let eventType = json["event_type"] as? String ?? ""
+        
+        if eventType == "meal" {
+            if let v = toNumber(json["calories"]) { json["calories"] = v }
+            if let v = toNumber(json["proteins"]) { json["proteins"] = v }
+            if let v = toNumber(json["fat"]) { json["fat"] = v }
+            if let v = toNumber(json["carbs"]) { json["carbs"] = v }
+        }
+        if eventType == "expense" {
+            if let v = toNumber(json["value"]) { json["value"] = v }
+        }
+        if eventType == "workout" {
+            if let v = toNumber(json["sets"]) { json["sets"] = v }
+            if let v = toNumber(json["reps"]) { json["reps"] = v }
+            if let v = toNumber(json["weight"]) { json["weight"] = v }
+        }
+
+        // Basic guard for required fields
+        guard !eventType.isEmpty else {
+            DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
+                if let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
+                    self?.messages[idx] = Message(
+                        id: streamingId,
+                        sender: .ai,
+                        text: "I couldn't detect what type of event to log. Try again with meal/workout/expense."
+                    )
+                }
+            }
+            return
+        }
+
+        // CREATE A UNIQUE KEY FOR THIS EVENT
+        let eventKey = "\(eventType)_\(json["comments"] ?? "")_\(json["value"] ?? json["calories"] ?? json["workout"] ?? "")"
+        
+        // CHECK IF THIS EVENT WAS ALREADY LOGGED
+        if loggedEvents.contains(eventKey) {
+            print("⚠️ Skipping duplicate event: \(eventKey)")
+            
+            // Still need to complete the streaming response
+            self.openAIService.sendMessageStreamWithRetry(
+                messages: self.messages.filter { $0.id != streamingId && $0.text != Constants.SystemMessages.aiThinking },
+                apiKey: openAIKey,
+                webhookURL: webhookURL,
+                functionResponses: [], // Empty - we're not acknowledging the duplicate
+                maxRetries: 2,
+                onPartial: { [weak self] partial in
+                    DispatchQueue.main.async {
+                        if let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
+                            self?.messages[idx] = Message(id: streamingId, sender: .ai, text: partial)
+                            // Save the updated message
+                            if !partial.isEmpty && partial != Constants.SystemMessages.aiThinking {
+                                self?.saveConversation()
+                            }
+                        }
+                        HapticsService.shared.streamTick()
+                    }
+                },
+                onFunctionCall: { _ in },
+                onComplete: { [weak self] result in
+                    DispatchQueue.main.async {
+                        self?.isLoading = false
+                        if case .failure(let error) = result {
+                            print("❌ Streaming error: \(error)")
+                            HapticsService.shared.streamEndedError()
+                        } else {
+                            self?.saveConversation()
+                            HapticsService.shared.streamEndedSuccess()
+                        }
+                    }
+                }
+            )
+            return
+        }
+        
+        // MARK THIS EVENT AS LOGGED
+        loggedEvents.insert(eventKey)
+
+        // 3) Send to webhook ONCE here
+        WebhookService.sendEvent(data: json, webhookURL: webhookURL)
+
+        // 4) Build assistant tool-call + tool result messages for the follow-up turn
+        let assistantToolCallMessage: [String: Any] = [
+            "role": "assistant",
+            "content": "",  // Important: empty content when using tools
+            "tool_calls": [[
+                "id": functionCall.id,
+                "type": "function",
+                "function": [
+                    "name": functionCall.function.name,
+                    "arguments": rawArgs
+                ]
+            ]]
+        ]
+
+        let toolResultMessage: [String: Any] = [
+            "role": "tool",
+            "tool_call_id": functionCall.id,
+            "name": functionCall.function.name,
+            "content": "Event logged successfully on \(json["date"] ?? "") at \(json["hour"] ?? "")."
+        ]
+
+        // 5) IMPORTANT: Filter out the thinking message and prepare clean history
+        let cleanMessages = self.messages.filter {
+            $0.id != streamingId && $0.text != Constants.SystemMessages.aiThinking
+        }
+
+        // 6) Second streamed call to let the model wrap up in natural language
+        self.openAIService.sendMessageStreamWithRetry(
+            messages: cleanMessages,  // Use clean messages, not self.messages
+            apiKey: openAIKey,
+            webhookURL: webhookURL,
+            functionResponses: [assistantToolCallMessage, toolResultMessage],
+            maxRetries: 2,
+            onPartial: { [weak self] partial in
+                DispatchQueue.main.async {
+                    if let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
+                        self?.messages[idx] = Message(id: streamingId, sender: .ai, text: partial)
+                        // Save the updated message
+                        if !partial.isEmpty && partial != Constants.SystemMessages.aiThinking {
+                            self?.saveConversation()
+                        }
+                    }
+                    HapticsService.shared.streamTick()
+                }
+            },
+            onFunctionCall: { _ in
+                // Usually no nested function calls, but if needed, handle here
+            },
+            onComplete: { [weak self] result in
+                DispatchQueue.main.async {
+                    self?.isLoading = false
+                    if case .failure(let error) = result,
+                       let idx = self?.messages.firstIndex(where: { $0.id == streamingId }) {
+                        let errorText = self?.formatError(error) ?? "An error occurred"
+                        self?.messages[idx] = Message(id: streamingId, sender: .ai, text: errorText)
+                        HapticsService.shared.streamEndedError()
+                    } else {
+                        self?.saveConversation()
+                        HapticsService.shared.streamEndedSuccess()
+                    }
+                }
+            }
+        )
+    }
+    
     private func handleWebhookIfNeeded(from userPrompt: String) {
         guard let webhookURL = UserDefaults.standard.string(forKey: Constants.UserDefaultsKeys.webhookURL),
               !webhookURL.isEmpty else {
@@ -214,21 +405,9 @@ final class ChatViewModel: ObservableObject {
         }
     }
 
-    private func appendMessage(_ message: Message) {
-        messages.append(message)
-
-        if messages.count > Constants.maxMessageCount {
-            messages.removeFirst(messages.count - Constants.maxMessageCount)
-        }
-    }
-
     private func removeThinkingMessage() {
         if let last = messages.last, last.text == Constants.SystemMessages.aiThinking {
             messages.removeLast()
         }
-    }
-
-    func startNewSession() {
-        messages.removeAll()
     }
 }

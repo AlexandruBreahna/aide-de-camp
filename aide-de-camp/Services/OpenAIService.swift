@@ -31,6 +31,13 @@ final class OpenAIService {
             "content": """
             You are a helpful assistant for matters related to health, fitness, nutrition, and finances. You offer practical advice on the aforementioned domains and ONLY when the user requests, you call the provided function to log a meal, workout, or expense.
 
+            CRITICAL RULES FOR LOGGING:
+            - NEVER re-log items that have already been logged in this conversation
+            - Only log NEW items explicitly mentioned in the CURRENT user message
+            - If a user mentions a price for something already logged, only log the expense, NOT the item again
+            - Each function call should represent ONE unique event that hasn't been logged yet
+            - When in doubt, ask for clarification rather than logging duplicates
+
             GENERAL RULES
             - Always include: "event_type", "date", and "hour" in the function arguments. Use your best guess, but the client will overwrite date/hour with the device's time.
             - Keep arguments strictly JSON-serializable primitives (strings/numbers). Put any units or assumptions in "comments". Prefer whole numbers where reasonable.
@@ -60,13 +67,14 @@ final class OpenAIService {
               category: "outgoing",
               value: 40,
               currency: "EUR",
-              comments: "none"
+              comments: "meal and drink in the city"
             - Map common currency words/symbols to ISO codes (e.g., euros → EUR, $, usd → USD, lei → RON, pounds → GBP). If currency is unclear, leave it as a 3-letter best guess.
             - Default category to "outgoing" unless user explicitly indicates another (e.g., "income", "refund").
 
             IMPORTANT
             - Do not place units in numeric fields (only numbers). Put units/assumptions in "comments".
             - Prefer best-effort extraction/estimation over follow-up questions.
+            - Track conversation context to avoid duplicate logging.
             """
         ]
         
@@ -147,11 +155,80 @@ final class OpenAIService {
         let task = session.dataTask(with: request)
         task.resume()
     }
+    
+    func sendMessageStreamWithRetry(
+        messages: [Message],
+        apiKey: String,
+        webhookURL: String,
+        functionResponses: [[String: Any]] = [],
+        maxRetries: Int = 2,
+        onPartial: @escaping (String) -> Void,
+        onFunctionCall: ((FunctionCall) -> Void)? = nil,
+        onComplete: @escaping (Result<Void, Error>) -> Void
+    ) {
+        var retryCount = 0
+        
+        func attemptRequest() {
+            sendMessageStream(
+                messages: messages,
+                apiKey: apiKey,
+                webhookURL: webhookURL,
+                functionResponses: functionResponses,
+                onPartial: onPartial,
+                onFunctionCall: onFunctionCall,
+                onComplete: { result in
+                    switch result {
+                    case .success:
+                        onComplete(.success(()))
+                    case .failure(let error):
+                        let nsError = error as NSError
+                        
+                        // Determine if error is retryable
+                        let isRetryable = self.isRetryableError(nsError)
+                        
+                        if isRetryable && retryCount < maxRetries {
+                            retryCount += 1
+                            // Exponential backoff: 1s, 2s, 4s...
+                            let delay = pow(2.0, Double(retryCount - 1))
+                            
+                            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                                attemptRequest()
+                            }
+                        } else {
+                            onComplete(.failure(error))
+                        }
+                    }
+                }
+            )
+        }
+        
+        attemptRequest()
+    }
+
+    private func isRetryableError(_ error: NSError) -> Bool {
+        // Network errors
+        if error.domain == NSURLErrorDomain {
+            let retryableCodes = [
+                NSURLErrorTimedOut,
+                NSURLErrorCannotFindHost,
+                NSURLErrorCannotConnectToHost,
+                NSURLErrorNetworkConnectionLost,
+                NSURLErrorDNSLookupFailed,
+                NSURLErrorNotConnectedToInternet,
+                NSURLErrorInternationalRoamingOff
+            ]
+            return retryableCodes.contains(error.code)
+        }
+        
+        // OpenAI API errors (rate limits, server errors)
+        if error.domain == "OpenAI API Error" {
+            let retryableStatusCodes = [429, 500, 502, 503, 504] // Rate limit and server errors
+            return retryableStatusCodes.contains(error.code)
+        }
+        
+        return false
+    }
 }
-
-// MARK: - Streaming Delegate
-
-// Services/OpenAIService.swift
 
 // MARK: - Streaming Delegate
 

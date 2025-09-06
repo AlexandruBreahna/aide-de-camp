@@ -26,24 +26,65 @@ struct ChatView: View {
                     ScrollView {
                         LazyVStack(spacing: 12) {
                             ForEach(viewModel.messages) { message in
-                                MessageBubbleView(message: message)
-                                    .id(message.id)
+                                VStack(alignment: message.isFromUser ? .trailing : .leading, spacing: 4) {
+                                    MessageBubbleView(message: message)
+                                        .id(message.id)
+                                    
+                                    // Retry button for error messages
+                                    if !message.isFromUser && (message.text.starts(with: "Error:") || message.text.starts(with: "Network error") || message.text.starts(with: "No internet")) {
+                                        Button(action: {
+                                            viewModel.retryLastMessage()
+                                        }) {
+                                            HStack(spacing: 4) {
+                                                Image(systemName: "arrow.clockwise")
+                                                    .font(.system(size: 12))
+                                                Text("Retry")
+                                                    .font(.caption)
+                                            }
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(Color.blue.opacity(0.1))
+                                            .foregroundColor(.blue)
+                                            .cornerRadius(12)
+                                        }
+                                        .padding(.horizontal)
+                                        .disabled(viewModel.isLoading)
+                                    }
+                                }
                             }
                         }
                         .padding(.top, 16)
-                        .padding(.bottom, 80) // room for input bar inset
-                        // Ensure the whole area is tappable for dismissing keyboard
+                        .padding(.bottom, 80)
                         .contentShape(Rectangle())
                     }
-                    // 1) Dismiss keyboard as you scroll (iOS 16+)
                     .scrollDismissesKeyboard(.interactively)
-                    // 2) Tapping anywhere in the chat history clears focus
                     .simultaneousGesture(TapGesture().onEnded {
                         isInputFocused = false
                     })
+                    .onAppear {
+                        if let lastMessage = viewModel.messages.last {
+                            scrollProxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
+                    }
+                    // Watch for new messages being added
                     .onChange(of: viewModel.messages.count, initial: false) { _, _ in
                         if let last = viewModel.messages.last {
-                            scrollProxy.scrollTo(last.id, anchor: .bottom)
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                scrollProxy.scrollTo(last.id, anchor: .bottom)
+                            }
+                        }
+                    }
+                    // Watch for loading state changes (when AI finishes responding)
+                    .onChange(of: viewModel.isLoading, initial: false) { oldValue, newValue in
+                        // When loading finishes (true -> false), scroll to bottom
+                        if oldValue == true && newValue == false {
+                            if let last = viewModel.messages.last {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        scrollProxy.scrollTo(last.id, anchor: .bottom)
+                                    }
+                                }
+                            }
                         }
                     }
                 }

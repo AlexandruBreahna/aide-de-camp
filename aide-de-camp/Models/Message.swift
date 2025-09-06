@@ -8,8 +8,8 @@
 import Foundation
 
 /// Represents a single chat message in the conversation.
-struct Message: Identifiable, Equatable {
-    enum Sender {
+struct Message: Identifiable, Equatable, Codable {
+    enum Sender: String, Codable {
         case user
         case ai
     }
