@@ -75,6 +75,21 @@ final class OpenAIService {
             - Do not place units in numeric fields (only numbers). Put units/assumptions in "comments".
             - Prefer best-effort extraction/estimation over follow-up questions.
             - Track conversation context to avoid duplicate logging.
+            
+            RETRIEVAL RULES
+            - When users ask about their logged data, use the retrieveEvents function
+            - Convert natural language dates to YYYY-MM-DD format:
+              * "today" → current date
+              * "yesterday" → current date - 1
+              * "this week" → date_from: start of week, date_to: today
+              * "last month" → appropriate date range
+            - Choose appropriate aggregation based on question:
+              * "How many calories today?" → aggregation: "sum", event_type: "meal"
+              * "Show me my workouts this week" → aggregation: "details", event_type: "workout"
+              * "What's my average daily expense?" → aggregation: "average", event_type: "expense"
+            - Never retrieve the same data twice in one conversation unless explicitly asked
+            - Present data in a natural, conversational way
+            - For comparisons, make multiple retrieveEvents calls with different date ranges
             """
         ]
         
@@ -87,35 +102,72 @@ final class OpenAIService {
         
         let messagesPayload: [[String: Any]] = [systemMessage] + chatMessages
         
-        let tools: [[String: Any]] = [[
-            "type": "function",
-            "function": [
-                "name": "logEvent",
-                "description": "Logs a meal, workout or expense to Google Sheets via Make webhook.",
-                "parameters": [
-                    "type": "object",
-                    "properties": [
-                        "event_type": ["type": "string", "enum": ["meal", "workout", "expense"]],
-                        "date": ["type": "string", "description": "YYYY-MM-DD"],
-                        "hour": ["type": "string", "description": "HH:mm"],
-                        "calories": ["type": "number"],
-                        "proteins": ["type": "number"],
-                        "fat": ["type": "number"],
-                        "carbs": ["type": "number"],
-                        "workout": ["type": "string"],
-                        "exercise": ["type": "string"],
-                        "sets": ["type": "number"],
-                        "reps": ["type": "number"],
-                        "weight": ["type": "number"],
-                        "category": ["type": "string"],
-                        "value": ["type": "number"],
-                        "currency": ["type": "string"],
-                        "comments": ["type": "string"]
-                    ],
-                    "required": ["event_type", "date", "hour"]
+        let tools: [[String: Any]] = [
+            [
+                "type": "function",
+                "function": [
+                    "name": "logEvent",
+                    "description": "Logs a meal, workout or expense to Google Sheets via Make webhook.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "event_type": ["type": "string", "enum": ["meal", "workout", "expense"]],
+                            "date": ["type": "string", "description": "YYYY-MM-DD"],
+                            "hour": ["type": "string", "description": "HH:mm"],
+                            "calories": ["type": "number"],
+                            "proteins": ["type": "number"],
+                            "fat": ["type": "number"],
+                            "carbs": ["type": "number"],
+                            "workout": ["type": "string"],
+                            "exercise": ["type": "string"],
+                            "sets": ["type": "number"],
+                            "reps": ["type": "number"],
+                            "weight": ["type": "number"],
+                            "category": ["type": "string"],
+                            "value": ["type": "number"],
+                            "currency": ["type": "string"],
+                            "comments": ["type": "string"]
+                        ],
+                        "required": ["event_type", "date", "hour"]
+                    ]
+                ]
+            ],
+            [
+                "type": "function",
+                "function": [
+                    "name": "retrieveEvents",
+                    "description": "Retrieves logged meals, workouts or expenses from the database with optional filtering and aggregation.",
+                    "parameters": [
+                        "type": "object",
+                        "properties": [
+                            "event_type": [
+                                "type": "string",
+                                "enum": ["meal", "workout", "expense"],
+                                "description": "Optional: filter by event type"
+                            ],
+                            "date_from": [
+                                "type": "string",
+                                "description": "Optional: start date (YYYY-MM-DD) for filtering"
+                            ],
+                            "date_to": [
+                                "type": "string",
+                                "description": "Optional: end date (YYYY-MM-DD) for filtering"
+                            ],
+                            "aggregation": [
+                                "type": "string",
+                                "enum": ["sum", "average", "count", "details"],
+                                "description": "Type of data to return: sum totals, average values, count of entries, or full details"
+                            ],
+                            "limit": [
+                                "type": "number",
+                                "description": "Optional: maximum number of records to return (default 100)"
+                            ]
+                        ],
+                        "required": []
+                    ]
                 ]
             ]
-        ]]
+        ]
         
         let body: [String: Any] = [
             "model": model,

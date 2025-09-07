@@ -9,80 +9,148 @@ import Foundation
 
 final class WebhookService {
     static let shared = WebhookService()
-
-    /// Sends the entire prompt to the webhook if it contains keywords like "log", "record", "track"
-    func processPrompt(prompt: String, webhookURL: String, completion: @escaping (Bool) -> Void) {
-        let triggerWords = ["log", "record", "track", "save", "add"]
-
-        guard triggerWords.contains(where: { prompt.lowercased().contains($0) }) else {
-            completion(false)
-            return
+    private var pendingRequests: Set<String> = []
+    
+    enum HTTPMethod: String {
+        case get = "GET"
+        case post = "POST"
+        case put = "PUT"
+        case delete = "DELETE"
+    }
+    
+    enum WebhookError: Error, LocalizedError {
+        case invalidURL
+        case invalidResponse
+        case decodingError
+        case serverError(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .invalidURL: return "Invalid webhook URL"
+            case .invalidResponse: return "Invalid server response"
+            case .decodingError: return "Failed to decode response"
+            case .serverError(let msg): return msg
+            }
         }
-
+    }
+    
+    // MARK: - Generic Request Executor following Apple's URLSession best practices
+    func executeRequest(
+        method: HTTPMethod,
+        operation: String,
+        filters: [String: Any]? = nil,
+        data: [String: Any]? = nil,
+        webhookURL: String,
+        completion: @escaping (Result<EventResponse, Error>) -> Void
+    ) {
         guard let url = URL(string: webhookURL) else {
-            completion(false)
+            completion(.failure(WebhookError.invalidURL))
             return
         }
-
+        
+        let filterString = filters?.map { "\($0.key):\($0.value)" }.joined(separator: ",") ?? "none"
+            let requestSignature = "\(method.rawValue)_\(operation)_\(filterString)"
+            
+            guard !pendingRequests.contains(requestSignature) else {
+                print("⚠️ Duplicate request in progress, skipping")
+                return
+            }
+            pendingRequests.insert(requestSignature)
+        
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        let payload = [
-            "prompt": prompt
+        request.timeoutInterval = 30
+        
+        // Build request payload
+        let requestId = UUID().uuidString
+        var payload: [String: Any] = [
+            "method": method.rawValue,
+            "operation": operation,
+            "request_id": requestId
         ]
-
+        
+        if let filters = filters {
+            payload["filters"] = filters
+        }
+        
+        if let data = data {
+            payload["data"] = data
+        }
+        
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: payload, options: [])
+            print("📤 Webhook request: \(operation) with ID: \(requestId)")
         } catch {
-            completion(false)
+            completion(.failure(error))
             return
         }
-
-        URLSession.shared.dataTask(with: request) { _, response, error in
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
-                completion(true)
-            } else {
-                completion(false)
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            defer {
+                DispatchQueue.main.async {
+                    self?.pendingRequests.remove(requestSignature)
+                }
+            }
+            if let error = error {
+                print("❌ Webhook request failed: \(error)")
+                completion(.failure(error))
+                return
+            }
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                completion(.failure(WebhookError.invalidResponse))
+                return
+            }
+            
+            print("📥 Webhook response code: \(httpResponse.statusCode)")
+            
+            guard let data = data else {
+                completion(.failure(WebhookError.invalidResponse))
+                return
+            }
+            
+            // Parse response
+            do {
+                let eventResponse = try JSONDecoder().decode(EventResponse.self, from: data)
+                
+                if eventResponse.success {
+                    completion(.success(eventResponse))
+                } else {
+                    let errorMsg = eventResponse.error ?? "Unknown error"
+                    completion(.failure(WebhookError.serverError(errorMsg)))
+                }
+            } catch {
+                print("❌ Failed to decode response: \(error)")
+                if let jsonString = String(data: data, encoding: .utf8) {
+                    print("📥 Raw response: \(jsonString)")
+                }
+                completion(.failure(WebhookError.decodingError))
             }
         }.resume()
     }
-
+    
+    // MARK: - Legacy support for existing log functionality
     static func sendEvent(data: [String: Any], webhookURL: String) {
-        guard let url = URL(string: webhookURL) else {
-            print("❌ Webhook URL is missing or invalid.")
-            return
-        }
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        do {
-            let payload = try JSONSerialization.data(withJSONObject: data, options: [])
-            request.httpBody = payload
-            print("📦 Sending payload to webhook: \(String(data: payload, encoding: .utf8) ?? "Invalid JSON")")
-        } catch {
-            print("❌ Failed to encode JSON: \(error)")
-            return
-        }
-
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            if let error = error {
-                print("❌ Webhook request failed: \(error)")
-                return
+        WebhookService.shared.executeRequest(
+            method: .post,
+            operation: "create",
+            filters: nil,
+            data: data,
+            webhookURL: webhookURL
+        ) { result in
+            switch result {
+            case .success(let response):
+                print("✅ Event logged successfully: \(response.requestId ?? "no-id")")
+            case .failure(let error):
+                print("❌ Failed to log event: \(error)")
             }
-
-            if let httpResponse = response as? HTTPURLResponse {
-                if httpResponse.statusCode == 200 {
-                    print("✅ Webhook response code: 200 OK")
-                } else {
-                    print("⚠️ Webhook responded with code: \(httpResponse.statusCode)")
-                    if let data = data, let body = String(data: data, encoding: .utf8) {
-                        print("⚠️ Webhook response body: \(body)")
-                    }
-                }
-            }
-        }.resume()
+        }
+    }
+    
+    // MARK: - Deprecated - kept for compatibility
+    func processPrompt(prompt: String, webhookURL: String, completion: @escaping (Bool) -> Void) {
+        // This method is no longer used but kept for compatibility
+        completion(false)
     }
 }
