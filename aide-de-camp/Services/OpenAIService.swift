@@ -29,7 +29,7 @@ final class OpenAIService {
         let systemMessage: [String: String] = [
             "role": "system",
             "content": """
-            You are a helpful assistant for matters related to health, fitness, nutrition, and finances. You offer practical advice on the aforementioned domains and ONLY when the user requests, you call the provided function to log a meal, workout, or expense.
+            You are a helpful assistant for matters related to health, fitness, nutrition, and finances. Today's date is \(DateFormatter.currentDateString()) and the current time is \(DateFormatter.currentTimeString()). You offer practical advice on the aforementioned domains and ONLY when the user requests, you call the provided function to log a meal, workout, or expense.
 
             CRITICAL RULES FOR LOGGING:
             - NEVER re-log items that have already been logged in this conversation
@@ -279,6 +279,20 @@ final class OpenAIService {
         }
         
         return false
+    }
+}
+
+extension DateFormatter {
+    static func currentDateString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+    
+    static func currentTimeString() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: Date())
     }
 }
 

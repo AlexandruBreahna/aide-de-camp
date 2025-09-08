@@ -358,6 +358,23 @@ final class ChatViewModel: ObservableObject {
         webhookURL: String,
         functionCall: FunctionCall
     ) {
+        // Transform the raw data into Event objects
+        let _: [Event] = response.data?.compactMap { rawEventDict in
+            return Event(
+                id: rawEventDict["__ROW_NUMBER__"]?.value as? String ?? UUID().uuidString,
+                eventType: "meal",
+                date: rawEventDict["0"]?.value as? String ?? "",
+                hour: rawEventDict["1"]?.value as? String ?? "",
+                calories: Double(rawEventDict["5"]?.value as? String ?? "0"),
+                proteins: Double(rawEventDict["3"]?.value as? String ?? "0"),
+                fat: Double(rawEventDict["4"]?.value as? String ?? "0"),
+                carbs: Double(rawEventDict["2"]?.value as? String ?? "0"),
+                workout: nil, exercise: nil, sets: nil, reps: nil, weight: nil,
+                category: nil, value: nil, currency: nil,
+                comments: rawEventDict["6"]?.value as? String
+            )
+        } ?? []
+        
         // Build a natural language summary of the retrieved data
         var summary = "Retrieved data:\n"
         
